@@ -3,16 +3,20 @@
 #include <vector>
 #include "poset.h"
 
+#define CHECK_FOR_NULLPTR(ptr) \
+            if(ptr == NULL)    \
+                return false;
+
 using std::unordered_map;
 using std::string;
 using std::vector;
 
-static unordered_map<unsigned long, unordered_map<string, vector<unsigned long>>> posets;
+static unordered_map<unsigned long, unordered_map<string, vector<string>>> posets;
 static unsigned long next_id = 0;
 
 extern "C" {
     unsigned long poset_new() {
-        unordered_map<string, vector<unsigned long>> poset;
+        unordered_map<string, vector<string>> poset;
         unsigned long poset_id = next_id;
         next_id++;
         posets[poset_id] = poset;
@@ -28,10 +32,27 @@ extern "C" {
         try {
             size = posets.at(id).size();
         }
-        catch (std::out_of_range &e) {
+        catch (std::exception &e) {
             size = 0;
         }
         return size;
+    }
+
+    bool poset_insert(unsigned long id, char const* value) {
+        CHECK_FOR_NULLPTR(value)
+        try {
+            unordered_map<string, vector<string>> poset = posets.at(id);
+            string new_element(value);//makes a deep copy
+            if(poset.count(new_element) != 0) {
+                return false;
+            }
+            vector<string> relations;
+            poset[new_element] = relations;
+            return true;
+        }
+        catch (std::exception &e) {
+            return false;
+        }
     }
 }
 
