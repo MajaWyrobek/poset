@@ -40,6 +40,26 @@ extern "C" {
         return size;
     }
 
+    bool poset_del(unsigned long id, char const *value1, char const *value2) {
+
+    }
+
+    bool poset_test(unsigned long id, char const* value1, char const* value2) {
+
+    }
+
+    void poset_clear(unsigned long id) {
+        try {
+            posets.erase(id);
+            pair<set<string>, set<pair<string, string>>> poset;
+            unsigned long poset_id = id;
+            posets[poset_id] = poset;
+        }
+        catch (std::exception &e) {
+            std::cerr << "poset_clear: poset " << id << " does not exist\n";
+        }
+    }
+
 }
 
 int main() {
