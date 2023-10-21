@@ -15,6 +15,12 @@ using std::string;
 using std::pair;
 using std::set;
 
+/* Container Aliases */
+using elements_container = set<string>;
+using relation = pair<string, string>;
+using relations_container = set<relation>;
+using poset = pair<elements_container, relations_container>;
+
 static unordered_map<unsigned long, pair<set<string>, set<pair<string, string>>>> posets;
 static unsigned long next_id = 0;
 
@@ -43,6 +49,8 @@ extern "C" {
     }
 
     bool poset_del(unsigned long id, char const *value1, char const *value2) {
+        // DO ZMIANY!!!
+        
         // warunki bycia częściowym porządkiem: 
         // zwrotność (sam ze sobą) - jest (chyba?)
         // przechodność ((x, y) i (y, z) => (x, z))
@@ -54,7 +62,7 @@ extern "C" {
         }
 
         // trzeba sprawdzić, czy po usunięciu ścieżki z value1 do value2 nadal da się jakoś przejść od jednego do drugiego
-        // pierdyknąć bfs i powinno pójść4
+        // pierdyknąć bfs i powinno pójść
         set<pair<string, string>> container = std::get<1>(posets.at(id));
         pair<string, string> order(value1, value2);
         container.erase(order); // usuwamy żeby nie przeszkadzało, jeśli się zepsuje to dodamy z powrotem   
@@ -91,9 +99,9 @@ extern "C" {
         try {
             pair<string, string> order(value1, value2);
 
-            if (std::get<0>(posets.at(id)).count(value1) == 0 ||
-                std::get<0>(posets.at(id)).count(value2) == 0 ||
-                std::get<1>(posets.at(id)).count(order) == 0) {
+            if (std::get<0>(posets.at(id)).count(value1) == 0 || // zmienić na first
+                std::get<0>(posets.at(id)).count(value2) == 0 || // zmienić na first
+                std::get<1>(posets.at(id)).count(order) == 0) {  // zmienić na second
                 return false;
             }
             else {
@@ -107,7 +115,7 @@ extern "C" {
 
     void poset_clear(unsigned long id) {
         try {
-            posets.erase(id);
+            posets.erase(id); // to zwraca 0 zamiast rzucać exception - zmienić na clear
             pair<set<string>, set<pair<string, string>>> poset;
             unsigned long poset_id = id;
             posets[poset_id] = poset;
