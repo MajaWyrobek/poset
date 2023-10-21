@@ -5,15 +5,16 @@
 #include <algorithm>
 #include "poset.h"
 
-#define CHECK_FOR_NULLPTR(ptr) \
-            if(ptr == NULL)    \
-                return false;
-
 using std::unordered_map;
 using std::string;
 using std::pair;
 using std::set;
 using std::vector;
+using std::make_pair;
+
+#define CHECK_FOR_NULLPTR(ptr) \
+            if(ptr == NULL)    \
+                return false;
 
 /* Container Aliases */
 using elements_container = set<string>;
@@ -25,13 +26,76 @@ using poset = pair<elements_container, relations_container>;
 static unordered_map<unsigned long, poset> posets;
 static unsigned long next_id = 0;
 
-/* Library Functions */
+/* Auxiliary Functions */
+static void poset_remove_relations(relations_container& relations,
+                                   const vector<relation>& relations_to_remove)
+{
+    for(const auto& relation : relations_to_remove)
+    {
+        relations.erase(relation);
+    }
+}
+
+static vector<relation> poset_relations_with_element(
+        const relations_container& relations,
+        const string& element)
+{
+    vector<relation> relations_with_element;
+
+    for(const auto& relation : relations)
+    {
+        if(element == relation.first ||
+           element == relation.second)
+        {
+            relations_with_element.push_back(relation);
+        }
+    }
+    return relations_with_element;
+}
+
+static bool poset_transitive_closure(relations_container& relations,
+                                     vector<relation>& added_relations)
+{
+    vector<relation> missing_relations;
+
+    for(auto i = relations.begin(); i != relations.end(); i++)
+    {
+        for (auto j = relations.begin(); j != relations.end(); j++)
+        {
+            if (*i != *j && j->first == i->second
+                && relations.count(make_pair(i->first, j->second)) == 0)
+            {
+                if(relations.count(make_pair(j->second, i->first)) != 0)
+                {
+                    return false;
+                }
+                missing_relations.push_back(make_pair(i->first, j->second));
+            }
+        }
+    }
+
+    if (!missing_relations.empty()) {
+        for (const relation& relation : missing_relations)
+        {
+            relations.insert(relation);
+            added_relations.push_back(relation);
+        }
+        return(poset_transitive_closure(relations, added_relations));
+    }
+    else
+    {
+        return true;
+    }
+}
+
+/* Main Functions */
 extern "C"
 {
     unsigned long poset_new()
     {
         poset poset;
         unsigned long poset_id = next_id;
+
         next_id++;
         posets[poset_id] = poset;
         return poset_id;
@@ -45,12 +109,13 @@ extern "C"
     size_t poset_size(unsigned long id)
     {
         size_t size;
+
         try
         {
-            size = std::get<0>(posets.at(id)).size();
+            //If a poset with a given id doesn't exist in posets,
+            //at will throw an out_of_range exception.
+            size = posets.at(id).first.size();
         }
-        //If a poset with a given id doesn't exist in posets,
-        //at will throw an out_of_range exception.
         catch (std::exception& e)
         {
             size = 0;
@@ -64,15 +129,16 @@ extern "C"
         try
         {
             poset poset = posets.at(id);
-            elements_container elements = std::get<0>(poset);
-            relations_container relations = std::get<1>(poset);
+            elements_container elements = poset.first;
+            relations_container relations = poset.second;
             string new_element(value);//makes a deep copy
-            relation new_relation = std::make_pair(new_element, new_element);
+            relation new_relation = make_pair(new_element, new_element);
 
             if(elements.count(new_element) != 0)
             {
                 return false;
             }
+
             elements.insert(new_element);
             relations.insert(new_relation);
             return true;
@@ -89,29 +155,58 @@ extern "C"
         try
         {
             poset poset = posets.at(id);
-            elements_container elements = std::get<0>(poset);
-            relations_container relations = std::get<1>(poset);
+            elements_container elements = poset.first;
+            relations_container relations = poset.second;
             string element_to_remove(value);
-            vector<relation> relations_to_remove;
 
             //erase returns 0 if nothing was removed
             if(elements.erase(element_to_remove) == 0)
             {
                 return false;
             }
-            for(const auto& relation : relations)
+
+            vector<relation> relations_to_remove =
+                    poset_relations_with_element(relations,element_to_remove);
+
+            poset_remove_relations(relations, relations_to_remove);
+            return true;
+        }
+        catch (std::exception& e)
+        {
+            return false;
+        }
+    }
+
+    bool poset_add(unsigned long id, char const* value1, char const* value2)
+    {
+        CHECK_FOR_NULLPTR(value1)
+        CHECK_FOR_NULLPTR(value2)
+        try
+        {
+            poset poset = posets.at(id);
+            elements_container elements = poset.first;
+            relations_container relations = poset.second;
+            string element1(value1);
+            string element2(value2);
+            vector<relation> added_relations;
+
+            if(elements.count(element1) == 0 ||
+               elements.count(element2) == 0 ||
+               relations.count(make_pair(element1, element2)) != 0 ||
+               relations.count(make_pair(element2, element1)) != 0)
             {
-                if(element_to_remove == std::get<0>(relation) ||
-                   element_to_remove == std::get<1>(relation))
-                {
-                    relations_to_remove.push_back(relation);
-                }
+                return false;
             }
-            for(const auto& relation : relations_to_remove)
+
+            relations.insert(make_pair(element1, element2));
+
+            if(!poset_transitive_closure(relations, added_relations))
             {
-                relations.erase(relation);
+                poset_remove_relations(relations, added_relations);
+                return false;
             }
             return true;
+
         }
         catch (std::exception& e)
         {
