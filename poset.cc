@@ -45,7 +45,18 @@ extern "C" {
     }
 
     bool poset_test(unsigned long id, char const* value1, char const* value2) {
-
+        try {
+            pair<string, string> order(value1, value2);
+            if (std::get<1>(posets.at(id)).find(order) != std::get<1>(posets.at(id)).end()) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        catch (std::exception &e) {
+            return false;
+        }
     }
 
     void poset_clear(unsigned long id) {
