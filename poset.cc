@@ -41,12 +41,15 @@ extern "C" {
     }
 
     bool poset_del(unsigned long id, char const *value1, char const *value2) {
-
+        // sprawdzanie, czy nie zaburzy to przechodniości
+        // czy w add nie może być tak, że zaburzy się antysymetryczność?
     }
 
     bool poset_test(unsigned long id, char const* value1, char const* value2) {
+        // tu brakuje case, że element jest sam ze sobą w relacji;
+        // implementujemy to w funkcji, czy w secie?
         try {
-            pair<string, string> order(value1, value2);
+            pair<string, string> order(value1, value2); 
             if (std::get<1>(posets.at(id)).find(order) != std::get<1>(posets.at(id)).end()) {
                 return true;
             }
