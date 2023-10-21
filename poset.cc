@@ -43,6 +43,7 @@ extern "C" {
     bool poset_del(unsigned long id, char const *value1, char const *value2) {
         // sprawdzanie, czy nie zaburzy to przechodniości
         // czy w add nie może być tak, że zaburzy się antysymetryczność?
+        //ff
     }
 
     bool poset_test(unsigned long id, char const* value1, char const* value2) {
