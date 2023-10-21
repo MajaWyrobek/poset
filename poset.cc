@@ -2,6 +2,8 @@
 #include <unordered_map>
 #include <vector>
 #include <set>
+#include <string.h>
+#include <queue>
 #include "poset.h"
 
 #define CHECK_FOR_NULLPTR(ptr) \
@@ -41,21 +43,61 @@ extern "C" {
     }
 
     bool poset_del(unsigned long id, char const *value1, char const *value2) {
+        // warunki bycia częściowym porządkiem: 
+        // zwrotność (sam ze sobą) - jest (chyba?)
+        // przechodność ((x, y) i (y, z) => (x, z))
+        // antysymetryczność (nie zachodzi jednocześnie dla (x, y) i (y, x)) - nie ma jak się popsuć przez usuwanie?
         // sprawdzanie, czy nie zaburzy to przechodniości
         // czy w add nie może być tak, że zaburzy się antysymetryczność?
-        //ff
+        if (!poset_test(id, value1, value2) || (strcmp(value1, value2) == 0)) {
+            return false;
+        }
+
+        // trzeba sprawdzić, czy po usunięciu ścieżki z value1 do value2 nadal da się jakoś przejść od jednego do drugiego
+        // pierdyknąć bfs i powinno pójść4
+        set<pair<string, string>> container = std::get<1>(posets.at(id));
+        pair<string, string> order(value1, value2);
+        container.erase(order); // usuwamy żeby nie przeszkadzało, jeśli się zepsuje to dodamy z powrotem   
+
+        std::queue<string> q;
+        string temp;
+
+        q.push(value1);
+
+        while(!q.empty()) {
+            temp = q.front();
+            q.pop();
+
+            if (temp == value2) {
+                container.insert(order);
+                return false;
+            }
+
+            // znajdź te do kótrych można dojść (first to temp) i wepchnij w kolejkę
+            for (auto i = container.begin(); i != container.end(); i++) {
+                if (i -> first == temp) {
+                    q.push(i -> first);
+                    // jak oznaczać odwiedzone? wektor? i czy wg trzeba, skoro nie może być pętli?
+                }
+            }
+        }
+
+        return true;
     }
 
     bool poset_test(unsigned long id, char const* value1, char const* value2) {
         // tu brakuje case, że element jest sam ze sobą w relacji;
         // implementujemy to w funkcji, czy w secie?
         try {
-            pair<string, string> order(value1, value2); 
-            if (std::get<1>(posets.at(id)).find(order) != std::get<1>(posets.at(id)).end()) {
-                return true;
+            pair<string, string> order(value1, value2);
+
+            if (std::get<0>(posets.at(id)).count(value1) == 0 ||
+                std::get<0>(posets.at(id)).count(value2) == 0 ||
+                std::get<1>(posets.at(id)).count(order) == 0) {
+                return false;
             }
             else {
-                return false;
+                return true;
             }
         }
         catch (std::exception &e) {
