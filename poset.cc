@@ -18,7 +18,7 @@ using std::make_pair;
 
 /* Container Aliases */
 using elements_container = set<string>;
-using relation = pair<string, string>;
+using relation = pair<const string&, const string&>;
 using relations_container = set<relation>;
 using poset = pair<elements_container, relations_container>;
 
@@ -41,7 +41,6 @@ static vector<relation> poset_relations_with_element(
         const string& element)
 {
     vector<relation> relations_with_element;
-
     for(const auto& relation : relations)
     {
         if(element == relation.first ||
@@ -57,35 +56,31 @@ static bool poset_transitive_closure(relations_container& relations,
                                      vector<relation>& added_relations)
 {
     vector<relation> missing_relations;
-
-    for(auto i = relations.begin(); i != relations.end(); i++)
+    do
     {
-        for (auto j = relations.begin(); j != relations.end(); j++)
+        missing_relations.clear();
+        for(auto i = relations.begin(); i != relations.end(); i++)
         {
-            if (*i != *j && j->first == i->second
-                && relations.count(make_pair(i->first, j->second)) == 0)
+            for (auto j = relations.begin(); j != relations.end(); j++)
             {
-                if(relations.count(make_pair(j->second, i->first)) != 0)
+                if (j->first == i->second
+                    && relations.count(make_pair(i->first, j->second)) == 0)
                 {
-                    return false;
+                    if(relations.count(make_pair(j->second, i->first)) != 0)
+                    {
+                        return false;
+                    }
+                    missing_relations.emplace_back(i->first, j->second);
                 }
-                missing_relations.push_back(make_pair(i->first, j->second));
             }
         }
-    }
-
-    if (!missing_relations.empty()) {
         for (const relation& relation : missing_relations)
         {
             relations.insert(relation);
             added_relations.push_back(relation);
         }
-        return(poset_transitive_closure(relations, added_relations));
-    }
-    else
-    {
-        return true;
-    }
+    } while(!missing_relations.empty());
+    return true;
 }
 
 /* Main Functions */
@@ -95,7 +90,6 @@ extern "C"
     {
         poset poset;
         unsigned long poset_id = next_id;
-
         next_id++;
         posets[poset_id] = poset;
         return poset_id;
@@ -109,7 +103,6 @@ extern "C"
     size_t poset_size(unsigned long id)
     {
         size_t size;
-
         try
         {
             //If a poset with a given id doesn't exist in posets,
@@ -131,16 +124,14 @@ extern "C"
             poset poset = posets.at(id);
             elements_container elements = poset.first;
             relations_container relations = poset.second;
-            string new_element(value);//makes a deep copy
-            relation new_relation = make_pair(new_element, new_element);
+            string new_element(value);//Makes a deep copy.
 
             if(elements.count(new_element) != 0)
             {
                 return false;
             }
-
+            //relation of an element with itself is held implicitely.
             elements.insert(new_element);
-            relations.insert(new_relation);
             return true;
         }
         catch (std::exception& e)
@@ -158,17 +149,15 @@ extern "C"
             elements_container elements = poset.first;
             relations_container relations = poset.second;
             string element_to_remove(value);
-
-            //erase returns 0 if nothing was removed
-            if(elements.erase(element_to_remove) == 0)
-            {
-                return false;
-            }
-
             vector<relation> relations_to_remove =
                     poset_relations_with_element(relations,element_to_remove);
 
             poset_remove_relations(relations, relations_to_remove);
+            //Erase returns 0 if nothing was removed.
+            if(elements.erase(element_to_remove) == 0)
+            {
+                return false;
+            }
             return true;
         }
         catch (std::exception& e)
@@ -197,16 +186,13 @@ extern "C"
             {
                 return false;
             }
-
             relations.insert(make_pair(element1, element2));
-
             if(!poset_transitive_closure(relations, added_relations))
             {
                 poset_remove_relations(relations, added_relations);
                 return false;
             }
             return true;
-
         }
         catch (std::exception& e)
         {
