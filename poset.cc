@@ -1,14 +1,14 @@
 #include <iostream>
 #include <unordered_map>
 #include <vector>
-#include <set>
+#include <unordered_set>
 #include <algorithm>
 #include "poset.h"
 
 using std::unordered_map;
 using std::string;
 using std::pair;
-using std::set;
+using std::unordered_set;
 using std::vector;
 using std::make_pair;
 
@@ -16,11 +16,22 @@ using std::make_pair;
             if(ptr == NULL)    \
                 return false;
 
+struct pair_hush
+{
+    size_t operator()(const pair<unsigned long, unsigned long> &pair) const
+    {
+        size_t h1 = std::hash<unsigned long>{}(pair.first);
+        size_t h2 = std::hash<unsigned long>{}(pair.second);
+        h1 ^= h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2);
+        return h1;
+    }
+};
+
 /* Container Aliases */
 using elements_container = unordered_map<string, unsigned long>;
-//unsigned longs are quicker to compare than strings longer than 4
+//unsigned longs will be quicker to compare than strings longer than 4
 using relation = pair<unsigned long, unsigned long>;
-using relations_container = set<relation>;
+using relations_container = unordered_set<relation, pair_hush>;
 using poset = pair<elements_container, relations_container>;
 
 /* Global Variables */
