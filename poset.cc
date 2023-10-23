@@ -1,4 +1,4 @@
-#ifdef NDEBUG
+#ifdef DNEBUG
   bool constexpr debug = false;
 #else
   bool constexpr debug = true;
@@ -51,90 +51,108 @@ namespace message
 
     static void function_start(const string& function_name)
     {
-        std::cerr << function_name + "()" << std::endl;
+        if constexpr (debug) {
+            std::cerr << function_name + "()" << std::endl;
+        }
     }
 
     static void function_start(const string& function_name, unsigned long id)
     {
-        std::cerr << function_name + "(" +
-                     std::to_string(id) +
-                     ")" << std::endl;
+        if constexpr (debug) {
+            std::cerr << function_name + "(" +
+                        std::to_string(id) +
+                        ")" << std::endl;
+        }
     }
 
     static void function_start(const string& function_name, unsigned long id,
                                const char* value)
     {
-        std::cerr << function_name + "(" +
-                     std::to_string(id) +
-                     ", " +
-                     print_value(value) +
-                     ")" << std::endl;
+        if constexpr (debug) {
+            std::cerr << function_name + "(" +
+                        std::to_string(id) +
+                        ", " +
+                        print_value(value) +
+                        ")" << std::endl;
+        }
     }
 
     static void function_start(const string& function_name, unsigned long id,
                                const char* value1, const char* value2)
     {
-        std::cerr << function_name + "(" +
-                     std::to_string(id) +
-                     ", " +
-                     print_value(value1) +
-                     ", " +
-                     print_value(value2) +
-                     ")" << std::endl;
+        if constexpr (debug) {
+            std::cerr << function_name + "(" +
+                        std::to_string(id) +
+                        ", " +
+                        print_value(value1) +
+                        ", " +
+                        print_value(value2) +
+                        ")" << std::endl;
+        }
     }
 
     static void about_poset(const string& function_name, unsigned long id,
                             const string& message)
     {
-        std::cerr << function_name + ": poset " +
-                     std::to_string(id) +
-                     " " +
-                     message << std::endl;
+        if constexpr (debug) {
+            std::cerr << function_name + ": poset " +
+                        std::to_string(id) +
+                        " " +
+                        message << std::endl;
+        }
     }
 
     static void about_element(const string& function_name, unsigned long id,
                               const char* value,
                               const string& message)
     {
-        std::cerr << function_name + ": poset " +
-                     std::to_string(id) +
-                     ", element " +
-                     print_value(value) +
-                     " " +
-                     message << std::endl;
+        if constexpr (debug) {
+            std::cerr << function_name + ": poset " +
+                        std::to_string(id) +
+                        ", element " +
+                        print_value(value) +
+                        " " +
+                        message << std::endl;
+        }
     }
 
     static void about_relation(const string& function_name, unsigned long id,
                               const char* value1, const char* value2,
                               const string& message)
     {
-        std::cerr << function_name + ": poset " +
-                     std::to_string(id) +
-                     ", relation (" +
-                     print_value(value1) +
-                     ", " +
-                     print_value(value2) +
-                     ") " +
-                     message << std::endl;
+        if constexpr (debug) {
+            std::cerr << function_name + ": poset " +
+                        std::to_string(id) +
+                        ", relation (" +
+                        print_value(value1) +
+                        ", " +
+                        print_value(value2) +
+                        ") " +
+                        message << std::endl;
+        }
     }
 
     static void about_poset_size(const string& function_name, unsigned long id,
                                  size_t size)
     {
-        std::cerr << function_name + ": poset " +
-                     std::to_string(id) +
-                     " contains " +
-                     std::to_string(size) +
-                     " element(s)" << std::endl;
+        if constexpr (debug) {
+            std::cerr << function_name + ": poset " +
+                        std::to_string(id) +
+                        " contains " +
+                        std::to_string(size) +
+                        " element(s)" << std::endl;
+        }
     }
 
     static void invalid_value(const string& function_name, const char* value,
                               const string& value_descriptor)
     {
-        std::cerr << function_name + ": invalid value" +
-                     value_descriptor + " (" +
-                     print_value(value) +
-                     ")" << std::endl;
+        if constexpr (debug) {
+            std::cerr << function_name + ": invalid value" +
+                        value_descriptor + " (" +
+                        print_value(value) +
+                        ")" << std::endl;
+        }
     }
 }
 
@@ -146,14 +164,12 @@ namespace message
 
             if (posets.at(id).first.count(value1) == 0) {
                 //-----------------------------
-                if constexpr (debug) 
                 message::about_element(func, id, value1, "does not exist");
                 //-----------------------------
                 return false;
             }
             else if (posets.at(id).first.count(value2) == 0) {
                 //-----------------------------
-                if constexpr (debug) 
                 message::about_element(func, id, value2, "does not exist");
                 //-----------------------------
                 return false;
@@ -163,7 +179,6 @@ namespace message
             }
             else if (posets.at(id).second.count(order) == 0) {
                 //-----------------------------
-                if constexpr (debug) 
                 message::about_relation(func, id, value1, value2, 
                                         "does not exist");
                 //-----------------------------
@@ -175,8 +190,7 @@ namespace message
         }
         catch (std::out_of_range &e) {
             //-----------------------------
-            if constexpr (debug) 
-                message::about_poset(func, id, "does not exist");
+            message::about_poset(func, id, "does not exist");
             //-----------------------------
             return false;
         }
@@ -188,32 +202,33 @@ namespace message
         bool invalid_data = false;
         if (value1 == nullptr) {
             //-----------------------------
-            if constexpr (debug) message::invalid_value(__func__, value1, "1");
+            message::invalid_value(func, value1, "1");
             //-----------------------------
             invalid_data = true;
         }
         if (value2 == nullptr) {
             //-----------------------------
-            if constexpr (debug) message::invalid_value(__func__, value2, "2");
+            message::invalid_value(func, value2, "2");
             //-----------------------------
             invalid_data = true;
         }
         if (invalid_data) return false;
+
+        return true;
     }
 
 /* Main functions */
     unsigned long poset_new()
     {
         //-----------------------------
-        if constexpr (debug) message::function_start(__func__);
+        message::function_start(__func__);
         //-----------------------------
         poset poset;
         unsigned long poset_id = next_poset_id;
         next_poset_id++;
         posets[poset_id] = poset;
         //-----------------------------
-        if constexpr (debug) 
-            message::about_poset(__func__, poset_id, "created");
+        message::about_poset(__func__, poset_id, "created");
         //-----------------------------
         return poset_id;
     }
@@ -221,18 +236,17 @@ namespace message
     void poset_delete(unsigned long id)
     {
         //-----------------------------
-        if constexpr (debug) message::function_start(__func__, id);
+        message::function_start(__func__, id);
         //-----------------------------
         if(posets.erase(id) == 0) {
             //-----------------------------
-            if constexpr (debug) 
-                message::about_poset(__func__, id, "does not exist");
+            message::about_poset(__func__, id, "does not exist");
             //-----------------------------
         }
         else
         {
             //-----------------------------
-            if constexpr (debug) message::about_poset(__func__, id, "deleted");
+            message::about_poset(__func__, id, "deleted");
             //-----------------------------
         }
     }
@@ -240,7 +254,7 @@ namespace message
     size_t poset_size(unsigned long id)
     {
         //-----------------------------
-        if constexpr (debug) message::function_start(__func__, id);
+        message::function_start(__func__, id);
         //-----------------------------
         try
         {
@@ -248,15 +262,14 @@ namespace message
             //at will throw an out_of_range exception.
             size_t size = posets.at(id).first.size();
             //-----------------------------
-            if constexpr (debug) message::about_poset_size(__func__, id, size);
+            message::about_poset_size(__func__, id, size);
             //-----------------------------
             return size;
         }
         catch (std::out_of_range& e)
         {
             //-----------------------------
-            if constexpr (debug) 
-                message::about_poset(__func__, id, "does not exist");
+            message::about_poset(__func__, id, "does not exist");
             //-----------------------------
             return 0;
         }
@@ -265,7 +278,6 @@ namespace message
     bool poset_del(unsigned long id, char const *value1, char const *value2) 
     {
         //-----------------------------
-        if constexpr (debug) 
         message::function_start(__func__, id, value1, value2);
         //-----------------------------
         if (!check_values(value1, value2, __func__)) {
@@ -278,7 +290,6 @@ namespace message
 
         if (strcmp(value1, value2) == 0) {
             //-----------------------------
-            if constexpr (debug) 
             message::about_relation(__func__, id, value1, value2, 
                                     "cannot be deleted");
             //-----------------------------
@@ -299,7 +310,6 @@ namespace message
                     if (j -> second == temp_less && j -> first == less) {
                         relations.insert(order);
                         //-----------------------------
-                        if constexpr (debug) 
                         message::about_relation(__func__, id, value1, value2, 
                                                 "cannot be deleted");
                         //-----------------------------
@@ -311,7 +321,6 @@ namespace message
         }
 
         //-----------------------------
-        if constexpr (debug) 
         message::about_relation(__func__, id, value1, value2, "deleted");
         //-----------------------------
         return true;
@@ -320,7 +329,6 @@ namespace message
     bool poset_test(unsigned long id, char const* value1, char const* value2) 
     {
         //-----------------------------
-        if constexpr (debug) 
         message::function_start(__func__, id, value1, value2);
         //-----------------------------
         if (!check_values(value1, value2, __func__)) {
@@ -329,7 +337,6 @@ namespace message
 
         if (poset_find(id, value1, value2, __func__)) {
             //-----------------------------
-            if constexpr (debug) 
             message::about_relation(__func__, id, value1, value2, "exists");
             //-----------------------------
             return true;
@@ -342,20 +349,18 @@ namespace message
     void poset_clear(unsigned long id) 
     {
         //-----------------------------
-        if constexpr (debug) message::function_start(__func__, id);
+        message::function_start(__func__, id);
         //-----------------------------
         if (posets.erase(id)) {
             poset poset;
             unsigned long poset_id = id;
             posets[poset_id] = poset;
             //-----------------------------
-            if constexpr (debug) 
             message::about_poset(__func__, id, "cleared");
             //-----------------------------
         }
         else {
             //-----------------------------
-            if constexpr (debug) 
             message::about_poset(__func__, id, "does not exist");
             //-----------------------------
         } 
