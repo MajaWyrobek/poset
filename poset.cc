@@ -1,4 +1,4 @@
-#ifdef DNEBUG
+#ifdef NDEBUG
   bool constexpr debug = false;
 #else
   bool constexpr debug = true;
