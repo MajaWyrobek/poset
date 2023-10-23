@@ -4,7 +4,6 @@
   bool constexpr debug = true;
 #endif
 
-
 #include <iostream>
 #include <unordered_map>
 #include <vector>
@@ -34,6 +33,12 @@ namespace {
     static unsigned long next_poset_id = 0;
 }
 
+/* TO-DO 
+    zrobić merge wszystkiego
+    zmienić na przekazywanie przez referencję
+    sprawdizć skill issue fiasco problem
+    przetestować wszystko
+*/
 
 namespace message
 {
