@@ -158,6 +158,9 @@ namespace message
                 //-----------------------------
                 return false;
             }
+            else if (value1 == value2) {
+                return true;
+            }
             else if (posets.at(id).second.count(order) == 0) {
                 //-----------------------------
                 if constexpr (debug) 
@@ -177,6 +180,25 @@ namespace message
             //-----------------------------
             return false;
         }
+    }
+
+    static bool check_values(char const* value1, char const* value2, 
+                             const string& func) 
+    {
+        bool invalid_data = false;
+        if (value1 == nullptr) {
+            //-----------------------------
+            if constexpr (debug) message::invalid_value(__func__, value1, "1");
+            //-----------------------------
+            invalid_data = true;
+        }
+        if (value2 == nullptr) {
+            //-----------------------------
+            if constexpr (debug) message::invalid_value(__func__, value2, "2");
+            //-----------------------------
+            invalid_data = true;
+        }
+        if (invalid_data) return false;
     }
 
 /* Main functions */
@@ -246,11 +268,20 @@ namespace message
         if constexpr (debug) 
         message::function_start(__func__, id, value1, value2);
         //-----------------------------
-        if (strcmp(value1, value2) == 0) {
+        if (!check_values(value1, value2, __func__)) {
             return false;
         }
 
         if (!poset_find(id, value1, value2, __func__)) {
+            return false;
+        }
+
+        if (strcmp(value1, value2) == 0) {
+            //-----------------------------
+            if constexpr (debug) 
+            message::about_relation(__func__, id, value1, value2, 
+                                    "cannot be deleted");
+            //-----------------------------
             return false;
         }
 
@@ -267,6 +298,11 @@ namespace message
                 while (j != relations.cend()) {
                     if (j -> second == temp_less && j -> first == less) {
                         relations.insert(order);
+                        //-----------------------------
+                        if constexpr (debug) 
+                        message::about_relation(__func__, id, value1, value2, 
+                                                "cannot be deleted");
+                        //-----------------------------
                         return false;
                     }
                     j++;
@@ -274,6 +310,10 @@ namespace message
             }
         }
 
+        //-----------------------------
+        if constexpr (debug) 
+        message::about_relation(__func__, id, value1, value2, "deleted");
+        //-----------------------------
         return true;
     }
 
@@ -283,10 +323,15 @@ namespace message
         if constexpr (debug) 
         message::function_start(__func__, id, value1, value2);
         //-----------------------------
-        if (value1 == value2) {
-            return true;
+        if (!check_values(value1, value2, __func__)) {
+            return false;
         }
-        else if (poset_find(id, value1, value2, __func__)) {
+
+        if (poset_find(id, value1, value2, __func__)) {
+            //-----------------------------
+            if constexpr (debug) 
+            message::about_relation(__func__, id, value1, value2, "exists");
+            //-----------------------------
             return true;
         }
         else {
@@ -303,9 +348,16 @@ namespace message
             poset poset;
             unsigned long poset_id = id;
             posets[poset_id] = poset;
+            //-----------------------------
+            if constexpr (debug) 
+            message::about_poset(__func__, id, "cleared");
+            //-----------------------------
         }
         else {
-            // tutaj co jak nie pyknie
+            //-----------------------------
+            if constexpr (debug) 
+            message::about_poset(__func__, id, "does not exist");
+            //-----------------------------
         } 
     }
 
