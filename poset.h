@@ -1,9 +1,9 @@
 #ifndef CPP2_POSET_H
 #define CPP2_POSET_H
 
-#endif //CPP2_POSET_H
-
+#ifdef __cplusplus
 extern "C" {
+#endif
 
     unsigned long poset_new();
 
@@ -23,4 +23,8 @@ extern "C" {
 
     void poset_clear(unsigned long id);
 
+#ifdef __cplusplus
 }
+#endif
+
+#endif //CPP2_POSET_H
