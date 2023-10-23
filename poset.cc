@@ -156,215 +156,215 @@ namespace message
     }
 }
 
-    static bool poset_find(unsigned long id, char const* value1, 
-                           char const* value2, const string& func) 
-    {
-        try {
-            relation order(value1, value2);
+static bool poset_find(unsigned long id, char const* value1, 
+                        char const* value2, const string& func) 
+{
+    try {
+        relation order(value1, value2);
 
-            if (posets.at(id).first.count(value1) == 0) {
-                //-----------------------------
-                message::about_element(func, id, value1, "does not exist");
-                //-----------------------------
-                return false;
-            }
-            else if (posets.at(id).first.count(value2) == 0) {
-                //-----------------------------
-                message::about_element(func, id, value2, "does not exist");
-                //-----------------------------
-                return false;
-            }
-            else if (value1 == value2) {
-                return true;
-            }
-            else if (posets.at(id).second.count(order) == 0) {
-                //-----------------------------
-                message::about_relation(func, id, value1, value2, 
-                                        "does not exist");
-                //-----------------------------
-                return false;
-            }
-            else {
-                return true;
-            }
-        }
-        catch (std::out_of_range &e) {
+        if (posets.at(id).first.count(value1) == 0) {
             //-----------------------------
-            message::about_poset(func, id, "does not exist");
+            message::about_element(func, id, value1, "does not exist");
             //-----------------------------
             return false;
         }
-    }
-
-    static bool check_values(char const* value1, char const* value2, 
-                             const string& func) 
-    {
-        bool invalid_data = false;
-        if (value1 == nullptr) {
+        else if (posets.at(id).first.count(value2) == 0) {
             //-----------------------------
-            message::invalid_value(func, value1, "1");
-            //-----------------------------
-            invalid_data = true;
-        }
-        if (value2 == nullptr) {
-            //-----------------------------
-            message::invalid_value(func, value2, "2");
-            //-----------------------------
-            invalid_data = true;
-        }
-        if (invalid_data) return false;
-
-        return true;
-    }
-
-/* Main functions */
-    unsigned long poset_new()
-    {
-        //-----------------------------
-        message::function_start(__func__);
-        //-----------------------------
-        poset poset;
-        unsigned long poset_id = next_poset_id;
-        next_poset_id++;
-        posets[poset_id] = poset;
-        //-----------------------------
-        message::about_poset(__func__, poset_id, "created");
-        //-----------------------------
-        return poset_id;
-    }
-
-    void poset_delete(unsigned long id)
-    {
-        //-----------------------------
-        message::function_start(__func__, id);
-        //-----------------------------
-        if(posets.erase(id) == 0) {
-            //-----------------------------
-            message::about_poset(__func__, id, "does not exist");
-            //-----------------------------
-        }
-        else
-        {
-            //-----------------------------
-            message::about_poset(__func__, id, "deleted");
-            //-----------------------------
-        }
-    }
-
-    size_t poset_size(unsigned long id)
-    {
-        //-----------------------------
-        message::function_start(__func__, id);
-        //-----------------------------
-        try
-        {
-            //If a poset with a given id doesn't exist in posets,
-            //at will throw an out_of_range exception.
-            size_t size = posets.at(id).first.size();
-            //-----------------------------
-            message::about_poset_size(__func__, id, size);
-            //-----------------------------
-            return size;
-        }
-        catch (std::out_of_range& e)
-        {
-            //-----------------------------
-            message::about_poset(__func__, id, "does not exist");
-            //-----------------------------
-            return 0;
-        }
-    }
-
-    bool poset_del(unsigned long id, char const *value1, char const *value2) 
-    {
-        //-----------------------------
-        message::function_start(__func__, id, value1, value2);
-        //-----------------------------
-        if (!check_values(value1, value2, __func__)) {
-            return false;
-        }
-
-        if (!poset_find(id, value1, value2, __func__)) {
-            return false;
-        }
-
-        if (strcmp(value1, value2) == 0) {
-            //-----------------------------
-            message::about_relation(__func__, id, value1, value2, 
-                                    "cannot be deleted");
+            message::about_element(func, id, value2, "does not exist");
             //-----------------------------
             return false;
         }
-
-        relations_container relations = posets.at(id).second;
-        string less = value1;
-        string greater = value2;
-        relation order(less, greater);
-        relations.erase(order); 
-
-        for (auto i = relations.cbegin(); i != relations.cend(); i++) {
-            if (i -> second == greater) {
-                string temp_less = i -> first;
-                auto j = relations.cbegin();
-                while (j != relations.cend()) {
-                    if (j -> second == temp_less && j -> first == less) {
-                        relations.insert(order);
-                        //-----------------------------
-                        message::about_relation(__func__, id, value1, value2, 
-                                                "cannot be deleted");
-                        //-----------------------------
-                        return false;
-                    }
-                    j++;
-                }
-            }
-        }
-
-        //-----------------------------
-        message::about_relation(__func__, id, value1, value2, "deleted");
-        //-----------------------------
-        return true;
-    }
-
-    bool poset_test(unsigned long id, char const* value1, char const* value2) 
-    {
-        //-----------------------------
-        message::function_start(__func__, id, value1, value2);
-        //-----------------------------
-        if (!check_values(value1, value2, __func__)) {
-            return false;
-        }
-
-        if (poset_find(id, value1, value2, __func__)) {
-            //-----------------------------
-            message::about_relation(__func__, id, value1, value2, "exists");
-            //-----------------------------
+        else if (value1 == value2) {
             return true;
         }
-        else {
+        else if (posets.at(id).second.count(order) == 0) {
+            //-----------------------------
+            message::about_relation(func, id, value1, value2, 
+                                    "does not exist");
+            //-----------------------------
             return false;
+        }
+        else {
+            return true;
+        }
+    }
+    catch (std::out_of_range &e) {
+        //-----------------------------
+        message::about_poset(func, id, "does not exist");
+        //-----------------------------
+        return false;
+    }
+}
+
+static bool check_values(char const* value1, char const* value2, 
+                            const string& func) 
+{
+    bool invalid_data = false;
+    if (value1 == nullptr) {
+        //-----------------------------
+        message::invalid_value(func, value1, "1");
+        //-----------------------------
+        invalid_data = true;
+    }
+    if (value2 == nullptr) {
+        //-----------------------------
+        message::invalid_value(func, value2, "2");
+        //-----------------------------
+        invalid_data = true;
+    }
+    if (invalid_data) return false;
+
+    return true;
+}
+
+/* Main functions */
+unsigned long poset_new()
+{
+    //-----------------------------
+    message::function_start(__func__);
+    //-----------------------------
+    poset poset;
+    unsigned long poset_id = next_poset_id;
+    next_poset_id++;
+    posets[poset_id] = poset;
+    //-----------------------------
+    message::about_poset(__func__, poset_id, "created");
+    //-----------------------------
+    return poset_id;
+}
+
+void poset_delete(unsigned long id)
+{
+    //-----------------------------
+    message::function_start(__func__, id);
+    //-----------------------------
+    if(posets.erase(id) == 0) {
+        //-----------------------------
+        message::about_poset(__func__, id, "does not exist");
+        //-----------------------------
+    }
+    else
+    {
+        //-----------------------------
+        message::about_poset(__func__, id, "deleted");
+        //-----------------------------
+    }
+}
+
+size_t poset_size(unsigned long id)
+{
+    //-----------------------------
+    message::function_start(__func__, id);
+    //-----------------------------
+    try
+    {
+        //If a poset with a given id doesn't exist in posets,
+        //at will throw an out_of_range exception.
+        size_t size = posets.at(id).first.size();
+        //-----------------------------
+        message::about_poset_size(__func__, id, size);
+        //-----------------------------
+        return size;
+    }
+    catch (std::out_of_range& e)
+    {
+        //-----------------------------
+        message::about_poset(__func__, id, "does not exist");
+        //-----------------------------
+        return 0;
+    }
+}
+
+bool poset_del(unsigned long id, char const *value1, char const *value2) 
+{
+    //-----------------------------
+    message::function_start(__func__, id, value1, value2);
+    //-----------------------------
+    if (!check_values(value1, value2, __func__)) {
+        return false;
+    }
+
+    if (!poset_find(id, value1, value2, __func__)) {
+        return false;
+    }
+
+    if (strcmp(value1, value2) == 0) {
+        //-----------------------------
+        message::about_relation(__func__, id, value1, value2, 
+                                "cannot be deleted");
+        //-----------------------------
+        return false;
+    }
+
+    relations_container relations = posets.at(id).second;
+    string less = value1;
+    string greater = value2;
+    relation order(less, greater);
+    relations.erase(order); 
+
+    for (auto i = relations.cbegin(); i != relations.cend(); i++) {
+        if (i -> second == greater) {
+            string temp_less = i -> first;
+            auto j = relations.cbegin();
+            while (j != relations.cend()) {
+                if (j -> second == temp_less && j -> first == less) {
+                    relations.insert(order);
+                    //-----------------------------
+                    message::about_relation(__func__, id, value1, value2, 
+                                            "cannot be deleted");
+                    //-----------------------------
+                    return false;
+                }
+                j++;
+            }
         }
     }
 
-    void poset_clear(unsigned long id) 
-    {
-        //-----------------------------
-        message::function_start(__func__, id);
-        //-----------------------------
-        if (posets.erase(id)) {
-            poset poset;
-            unsigned long poset_id = id;
-            posets[poset_id] = poset;
-            //-----------------------------
-            message::about_poset(__func__, id, "cleared");
-            //-----------------------------
-        }
-        else {
-            //-----------------------------
-            message::about_poset(__func__, id, "does not exist");
-            //-----------------------------
-        } 
+    //-----------------------------
+    message::about_relation(__func__, id, value1, value2, "deleted");
+    //-----------------------------
+    return true;
+}
+
+bool poset_test(unsigned long id, char const* value1, char const* value2) 
+{
+    //-----------------------------
+    message::function_start(__func__, id, value1, value2);
+    //-----------------------------
+    if (!check_values(value1, value2, __func__)) {
+        return false;
     }
+
+    if (poset_find(id, value1, value2, __func__)) {
+        //-----------------------------
+        message::about_relation(__func__, id, value1, value2, "exists");
+        //-----------------------------
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+void poset_clear(unsigned long id) 
+{
+    //-----------------------------
+    message::function_start(__func__, id);
+    //-----------------------------
+    if (posets.erase(id)) {
+        poset poset;
+        unsigned long poset_id = id;
+        posets[poset_id] = poset;
+        //-----------------------------
+        message::about_poset(__func__, id, "cleared");
+        //-----------------------------
+    }
+    else {
+        //-----------------------------
+        message::about_poset(__func__, id, "does not exist");
+        //-----------------------------
+    } 
+}
 
 int main() {
     
