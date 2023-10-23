@@ -138,18 +138,47 @@ namespace message
     }
 }
 
+    static bool poset_find(unsigned long id, char const* value1, 
+                           char const* value2) 
+    {
+        try {
+            relation order(value1, value2);
+
+            if (posets.at(id).first.count(value1) == 0) {
+                return false;
+            }
+            else if (posets.at(id).first.count(value2) == 0) {
+                return false;
+            }
+            else if (posets.at(id).second.count(order) == 0) {
+                return false;
+            }
+            else {
+                return true;
+            }
+        }
+        catch (std::out_of_range &e) {
+            //-----------------------------
+            if constexpr (debug) 
+                message::about_poset(__func__, id, "does not exist");
+            //-----------------------------
+            return false;
+        }
+    }
+
 /* Main functions */
     unsigned long poset_new()
     {
         //-----------------------------
-        message::function_start(__func__);
+        if constexpr (debug) message::function_start(__func__);
         //-----------------------------
         poset poset;
         unsigned long poset_id = next_poset_id;
         next_poset_id++;
         posets[poset_id] = poset;
         //-----------------------------
-        message::about_poset(__func__, poset_id, "created");
+        if constexpr (debug) 
+            message::about_poset(__func__, poset_id, "created");
         //-----------------------------
         return poset_id;
     }
@@ -157,17 +186,18 @@ namespace message
     void poset_delete(unsigned long id)
     {
         //-----------------------------
-        message::function_start(__func__, id);
+        if constexpr (debug) message::function_start(__func__, id);
         //-----------------------------
         if(posets.erase(id) == 0) {
             //-----------------------------
-            message::about_poset(__func__, id, "does not exist");
+            if constexpr (debug) 
+                message::about_poset(__func__, id, "does not exist");
             //-----------------------------
         }
         else
         {
             //-----------------------------
-            message::about_poset(__func__, id, "deleted");
+            if constexpr (debug) message::about_poset(__func__, id, "deleted");
             //-----------------------------
         }
     }
@@ -175,7 +205,7 @@ namespace message
     size_t poset_size(unsigned long id)
     {
         //-----------------------------
-        message::function_start(__func__, id);
+        if constexpr (debug) message::function_start(__func__, id);
         //-----------------------------
         try
         {
@@ -183,21 +213,31 @@ namespace message
             //at will throw an out_of_range exception.
             size_t size = posets.at(id).first.size();
             //-----------------------------
-            message::about_poset_size(__func__, id, size);
+            if constexpr (debug) message::about_poset_size(__func__, id, size);
             //-----------------------------
             return size;
         }
         catch (std::out_of_range& e)
         {
             //-----------------------------
-            message::about_poset(__func__, id, "does not exist");
+            if constexpr (debug) 
+                message::about_poset(__func__, id, "does not exist");
             //-----------------------------
             return 0;
         }
     }
 
-    bool poset_del(unsigned long id, char const *value1, char const *value2) {
-        if (!poset_test(id, value1, value2) || (strcmp(value1, value2) == 0)) {
+    bool poset_del(unsigned long id, char const *value1, char const *value2) 
+    {
+        //-----------------------------
+        if constexpr (debug) 
+        message::function_start(__func__, id, value1, value2);
+        //-----------------------------
+        if (strcmp(value1, value2) == 0) {
+            return false;
+        }
+
+        if (!poset_find(id, value1, value2)) {
             return false;
         }
 
@@ -224,28 +264,28 @@ namespace message
         return true;
     }
 
-    bool poset_test(unsigned long id, char const* value1, char const* value2) {
-        try {
-            relation order(value1, value2);
-
-            if (value1 == value2) {
-                return true;
-            }
-            else if (posets.at(id).first.count(value1) == 0 ||
-                posets.at(id).first.count(value2) == 0 ||
-                posets.at(id).second.count(order) == 0) {
-                return false;
-            }
-            else {
-                return true;
-            }
+    bool poset_test(unsigned long id, char const* value1, char const* value2) 
+    {
+        //-----------------------------
+        if constexpr (debug) 
+        message::function_start(__func__, id, value1, value2);
+        //-----------------------------
+        if (value1 == value2) {
+            return true;
         }
-        catch (std::exception &e) {
+        else if (poset_find(id, value1, value2)) {
+            return true;
+        }
+        else {
             return false;
         }
     }
 
-    void poset_clear(unsigned long id) {
+    void poset_clear(unsigned long id) 
+    {
+        //-----------------------------
+        if constexpr (debug) message::function_start(__func__, id);
+        //-----------------------------
         if (posets.erase(id)) {
             poset poset;
             unsigned long poset_id = id;
