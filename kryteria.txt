@@ -1,0 +1,57 @@
+Unikać niezgodności zawartości repozytorium ze specyfikacją zadania, brzydkiego 
+stylu, ostrzeżeń wypisywanych przez kompilator, błędów w komunikatach 
+diagnostycznych oraz ich wypisywania w złych miejscach, rozwlekłej struktury 
+programu, rozpatrywania wielu warunków brzegowych, powtarzania kodu, 
+potencjalnych wycieków pamięci, błędów w stosowaniu przestrzeni nazw.
+Korzystać z kontenerów i metod udostępnianych przez standardową bibliotekę C++.
+
+Nie definiować własnych struktur ani klas.
+
+Nie przechowywać przekazanych przez użytkownika wskaźników char const * 
+bezpośrednio, bowiem użytkownik może po wykonaniu operacji modyfikować dane pod 
+uprzednio przekazanym wskaźnikiem lub zwolnić pamięć.
+
+Dla każdego zbioru poset należy przechowywać tylko jedną kopię nazwy każdego 
+elementu.
+
+Zapewnić poprawność plików nagłówkowych - zabezpieczenie header-guard, różne 
+wersje kodu dla kompilatora C i C++, dostęp do elementów z różnych przestrzeni 
+nazw.
+
+Nie używać #ifdef __cplusplus, extern "C" w części kodu kompilowanej tylko w C++.
+Nie uzależniać fragmentów kodu źródłowego, realizującego operacje na zbiorach od
+opcji -DNDEBUG kompilatora.
+
+Ukrywać przed innymi jednostkami translacji zmienne globalne i funkcje niebędące
+częścią interfejsu modułu poset.
+
+Zapewnić poprawną inicjalizację zmiennych globalnych, która nie będzie podatna 
+na zmianę kolejności ich inicjalizowania - tzw. static initialization order 
+fiasco problem (czytanka "Inicjowanie obiektów globalnych [także przed C++20 i w
+ C++20]").
+
+Warto w tym zakresie zwrócić także uwagę na prawidłową inicjalizację 
+(i niszczenie) standardowych strumieni C++ (cout, cin i cerr). Gwarancję tego 
+daje utworzenie obiektu klasy std::ios_base::Init. Już samo dołączenie nagłówka 
+<iostream> wystarczy, gdyż definiuje on obiekt właśnie tego typu, mający 
+statyczny czas przechowywania.
+
+Nie wyszukiwać w kontenerze wielokrotne według tego samego klucza.
+
+Poprawnie dobierać typy, np. nie używać int tam gdzie winno być size_t.
+
+Nie przekazywać funkcjom dużych argumentów przez wartość tylko przez stałą 
+referencję (w tym zadaniu jeszcze nie będzie za to kar).
+
+Używać if constexpr szczególnie zamiast dyrektyw #if.Instrukcja if constexpr 
+jest instrukcją warunkową, której wartość może być wyliczana, a zawartość 
+optymalizowana, podczas kompilacji. Warunek w takiej instrukcji musi być 
+wyrażeniem stałym typu bool. Jeśli warunek po if constexpr jest znany podczas 
+kompilacji, to kompilator usuwa nieużywany blok kodu takiej instrukcji 
+warunkowej, tzn. jeśli warunek będzie prawdziwy, to usunięty będzie blok false, 
+a jeśli nieprawdziwy, to usunięty zostanie blok true. W przeciwieństwie do 
+dyrektyw preprocesora #if, kod w obu blokach po if constexpr, nawet tych 
+usuwanych podczas kompilacji, musi być zgodny ze składnią języka C++ (inaczej 
+kompilacje nie powiedzie się).
+
+Używać using zamiast typedef.
