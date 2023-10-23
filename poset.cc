@@ -39,13 +39,15 @@ namespace message
 {
     static string print_value(const char* value)
     {
-        if(value == nullptr)
-        {
-            return "NULL";
-        }
-        else
-        {
-            return "\"" + string(value) + "\"";
+        if constexpr (debug) {
+            if(value == nullptr)
+            {
+                return "NULL";
+            }
+            else
+            {
+                return "\"" + string(value) + "\"";
+            }
         }
     }
 
