@@ -289,7 +289,7 @@ namespace message
         string less = value1;
         string greater = value2;
         relation order(less, greater);
-        relations.erase(order); // usuwamy żeby nie przeszkadzało, jeśli się zepsuje to dodamy z powrotem   
+        relations.erase(order); 
 
         for (auto i = relations.cbegin(); i != relations.cend(); i++) {
             if (i -> second == greater) {
@@ -362,5 +362,6 @@ namespace message
     }
 
 int main() {
+    
     return 0;
 }
