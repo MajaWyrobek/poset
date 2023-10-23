@@ -139,18 +139,31 @@ namespace message
 }
 
     static bool poset_find(unsigned long id, char const* value1, 
-                           char const* value2) 
+                           char const* value2, const string& func) 
     {
         try {
             relation order(value1, value2);
 
             if (posets.at(id).first.count(value1) == 0) {
+                //-----------------------------
+                if constexpr (debug) 
+                message::about_element(func, id, value1, "does not exist");
+                //-----------------------------
                 return false;
             }
             else if (posets.at(id).first.count(value2) == 0) {
+                //-----------------------------
+                if constexpr (debug) 
+                message::about_element(func, id, value2, "does not exist");
+                //-----------------------------
                 return false;
             }
             else if (posets.at(id).second.count(order) == 0) {
+                //-----------------------------
+                if constexpr (debug) 
+                message::about_relation(func, id, value1, value2, 
+                                        "does not exist");
+                //-----------------------------
                 return false;
             }
             else {
@@ -160,7 +173,7 @@ namespace message
         catch (std::out_of_range &e) {
             //-----------------------------
             if constexpr (debug) 
-                message::about_poset(__func__, id, "does not exist");
+                message::about_poset(func, id, "does not exist");
             //-----------------------------
             return false;
         }
@@ -237,7 +250,7 @@ namespace message
             return false;
         }
 
-        if (!poset_find(id, value1, value2)) {
+        if (!poset_find(id, value1, value2, __func__)) {
             return false;
         }
 
@@ -273,7 +286,7 @@ namespace message
         if (value1 == value2) {
             return true;
         }
-        else if (poset_find(id, value1, value2)) {
+        else if (poset_find(id, value1, value2, __func__)) {
             return true;
         }
         else {
