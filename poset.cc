@@ -25,6 +25,7 @@ using std::make_pair;
     zmienić na przekazywanie przez referencję
     sprawdizć skill issue fiasco problem
     przetestować wszystko
+    napisać komentarze
 */
 
 //There is no hashing function for pairs in the standard library
@@ -519,6 +520,100 @@ bool poset_add(unsigned long id, char const* value1, char const* value2)
     //-----------------------------
     return true;
 }
+
+bool poset_del(unsigned long id, char const *value1, char const *value2) 
+{
+    //-----------------------------
+    message::function_start(__func__, id, value1, value2);
+    //-----------------------------
+    if (!check_values(value1, value2, __func__)) {
+        return false;
+    }
+
+    if (!poset_find(id, value1, value2, __func__)) {
+        return false;
+    }
+
+    if (value1 == value2) {
+        //-----------------------------
+        message::about_relation(__func__, id, value1, value2, 
+                                "cannot be deleted");
+        //-----------------------------
+        return false;
+    }
+
+    poset& poset = posets.at(id);
+    elements_container& elements = poset.first;
+    relations_container& relations = poset.second;
+    auto less = elements.at(value1);
+    auto greater = elements.at(value2);
+    relation order(less, greater);
+    relations.erase(order); 
+
+    for (auto i = relations.cbegin(); i != relations.cend(); i++) {
+        if (i -> second == greater) {
+            auto temp_less = i -> first;
+            auto j = relations.cbegin();
+            while (j != relations.cend()) {
+                if (j -> second == temp_less && j -> first == less) {
+                    relations.insert(order);
+                    //-----------------------------
+                    message::about_relation(__func__, id, value1, value2, 
+                                            "cannot be deleted");
+                    //-----------------------------
+                    return false;
+                }
+                j++;
+            }
+        }
+    }
+
+    //-----------------------------
+    message::about_relation(__func__, id, value1, value2, "deleted");
+    //-----------------------------
+    return true;
+}
+
+bool poset_test(unsigned long id, char const* value1, char const* value2) 
+{
+    //-----------------------------
+    message::function_start(__func__, id, value1, value2);
+    //-----------------------------
+    if (!check_values(value1, value2, __func__)) {
+        return false;
+    }
+
+    if (poset_find(id, value1, value2, __func__)) {
+        //-----------------------------
+        message::about_relation(__func__, id, value1, value2, "exists");
+        //-----------------------------
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+void poset_clear(unsigned long id) 
+{
+    //-----------------------------
+    message::function_start(__func__, id);
+    //-----------------------------
+    if (posets.erase(id)) {
+        poset poset;
+        unsigned long poset_id = id;
+        posets[poset_id] = poset;
+        //-----------------------------
+        message::about_poset(__func__, id, "cleared");
+        //-----------------------------
+    }
+    else {
+        //-----------------------------
+        message::about_poset(__func__, id, "does not exist");
+        //-----------------------------
+    } 
+}
+
 
 int main() {
     unsigned long p1;
