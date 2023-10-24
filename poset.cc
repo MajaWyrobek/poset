@@ -1,3 +1,9 @@
+#ifdef NDEBUG
+  bool constexpr debug = false;
+#else
+  bool constexpr debug = true;
+#endif
+
 #include <iostream>
 #include <unordered_map>
 #include <vector>
@@ -13,6 +19,13 @@ using std::pair;
 using std::unordered_set;
 using std::vector;
 using std::make_pair;
+
+/* TO-DO 
+    zrobić merge wszystkiego
+    zmienić na przekazywanie przez referencję
+    sprawdizć skill issue fiasco problem
+    przetestować wszystko
+*/
 
 //There is no hashing function for pairs in the standard library
 struct pair_hush
@@ -98,106 +111,192 @@ static bool poset_transitive_closure(relations_container& relations,
     return true;
 }
 
+static bool poset_find(unsigned long id, char const* value1, 
+                        char const* value2, const string& func) 
+{
+    try {
+        poset& poset = posets.at(id);
+        elements_container& elements = poset.first;
+
+        if (posets.at(id).first.count(value1) == 0) {
+            //-----------------------------
+            message::about_element(func, id, value1, "does not exist");
+            //-----------------------------
+            return false;
+        }
+        else if (posets.at(id).first.count(value2) == 0) {
+            //-----------------------------
+            message::about_element(func, id, value2, "does not exist");
+            //-----------------------------
+            return false;
+        }
+        else if (value1 == value2) {
+            return true;
+        }
+        
+        auto element1 = elements.at(value1);
+        auto element2 = elements.at(value2);
+        
+        if (posets.at(id).second.count(make_pair(element1, element2)) == 0) {
+            //-----------------------------
+            message::about_relation(func, id, value1, value2, 
+                                    "does not exist");
+            //-----------------------------
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
+    catch (std::out_of_range &e) {
+        //-----------------------------
+        message::about_poset(func, id, "does not exist");
+        //-----------------------------
+        return false;
+    }
+}
+
+static bool check_values(char const* value1, char const* value2, 
+                            const string& func) 
+{
+    bool invalid_data = false;
+    if (value1 == nullptr) {
+        //-----------------------------
+        message::invalid_value(func, value1, "1");
+        //-----------------------------
+        invalid_data = true;
+    }
+    if (value2 == nullptr) {
+        //-----------------------------
+        message::invalid_value(func, value2, "2");
+        //-----------------------------
+        invalid_data = true;
+    }
+    if (invalid_data) return false;
+
+    return true;
+}
+
 namespace message
 {
     static string print_value(const char* value)
     {
-        if(value == nullptr)
-        {
-            return "NULL";
-        }
-        else
-        {
-            return "\"" + string(value) + "\"";
+        if constexpr (debug) {
+            if(value == nullptr)
+            {
+                return "NULL";
+            }
+            else
+            {
+                return "\"" + string(value) + "\"";
+            }
         }
     }
 
     static void function_start(const string& function_name)
     {
-        std::cerr << function_name + "()" << std::endl;
+        if constexpr (debug) {
+            std::cerr << function_name + "()" << std::endl;
+        }
     }
 
     static void function_start(const string& function_name, unsigned long id)
     {
-        std::cerr << function_name + "(" +
-                     std::to_string(id) +
-                     ")" << std::endl;
+        if constexpr (debug) {
+            std::cerr << function_name + "(" +
+                        std::to_string(id) +
+                        ")" << std::endl;
+        }
     }
 
     static void function_start(const string& function_name, unsigned long id,
                                const char* value)
     {
-        std::cerr << function_name + "(" +
-                     std::to_string(id) +
-                     ", " +
-                     print_value(value) +
-                     ")" << std::endl;
+        if constexpr (debug) {
+            std::cerr << function_name + "(" +
+                        std::to_string(id) +
+                        ", " +
+                        print_value(value) +
+                        ")" << std::endl;
+        }
     }
 
     static void function_start(const string& function_name, unsigned long id,
                                const char* value1, const char* value2)
     {
-        std::cerr << function_name + "(" +
-                     std::to_string(id) +
-                     ", " +
-                     print_value(value1) +
-                     ", " +
-                     print_value(value2) +
-                     ")" << std::endl;
+        if constexpr (debug) {
+            std::cerr << function_name + "(" +
+                        std::to_string(id) +
+                        ", " +
+                        print_value(value1) +
+                        ", " +
+                        print_value(value2) +
+                        ")" << std::endl;
+        }
     }
 
     static void about_poset(const string& function_name, unsigned long id,
                             const string& message)
     {
-        std::cerr << function_name + ": poset " +
-                     std::to_string(id) +
-                     " " +
-                     message << std::endl;
+        if constexpr (debug) {
+            std::cerr << function_name + ": poset " +
+                        std::to_string(id) +
+                        " " +
+                        message << std::endl;
+        }
     }
 
     static void about_element(const string& function_name, unsigned long id,
                               const char* value,
                               const string& message)
     {
-        std::cerr << function_name + ": poset " +
-                     std::to_string(id) +
-                     ", element " +
-                     print_value(value) +
-                     " " +
-                     message << std::endl;
+        if constexpr (debug) {
+            std::cerr << function_name + ": poset " +
+                        std::to_string(id) +
+                        ", element " +
+                        print_value(value) +
+                        " " +
+                        message << std::endl;
+        }
     }
 
     static void about_relation(const string& function_name, unsigned long id,
                               const char* value1, const char* value2,
                               const string& message)
     {
-        std::cerr << function_name + ": poset " +
-                     std::to_string(id) +
-                     ", relation (" +
-                     print_value(value1) +
-                     ", " +
-                     print_value(value2) +
-                     ") " +
-                     message << std::endl;
+        if constexpr (debug) {
+            std::cerr << function_name + ": poset " +
+                        std::to_string(id) +
+                        ", relation (" +
+                        print_value(value1) +
+                        ", " +
+                        print_value(value2) +
+                        ") " +
+                        message << std::endl;
+        }
     }
 
     static void about_poset_size(const string& function_name, unsigned long id,
                                  size_t size)
     {
-        std::cerr << function_name + ": poset " +
-                     std::to_string(id) +
-                     " contains " +
-                     std::to_string(size) +
-                     " element(s)" << std::endl;
+        if constexpr (debug) {
+            std::cerr << function_name + ": poset " +
+                        std::to_string(id) +
+                        " contains " +
+                        std::to_string(size) +
+                        " element(s)" << std::endl;
+        }
     }
 
     static void invalid_value(const string& function_name, const char* value,
                               const string& value_descriptor)
     {
-        std::cerr << function_name + ": invalid value" +
-                     value_descriptor + " (" +
-                     print_value(value) +
-                     ")" << std::endl;
+        if constexpr (debug) {
+            std::cerr << function_name + ": invalid value" +
+                        value_descriptor + " (" +
+                        print_value(value) +
+                        ")" << std::endl;
+        }
     }
 }
 
