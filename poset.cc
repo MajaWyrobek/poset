@@ -1,3 +1,9 @@
+#ifndef NDEBUG
+    constexpr bool debug = true;
+#else
+    constexpr bool debug = false;
+#endif
+
 #include <iostream>
 #include <unordered_map>
 #include <vector>
@@ -14,23 +20,9 @@ using std::unordered_set;
 using std::vector;
 using std::make_pair;
 
-//There is no hashing function for pairs in the standard library
-struct pair_hush
-{
-    size_t operator()(const pair<unsigned long, unsigned long> &pair) const
-    {
-        size_t h1 = std::hash<unsigned long>{}(pair.first);
-        size_t h2 = std::hash<unsigned long>{}(pair.second);
-        h1 ^= h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2);
-        return h1;
-    }
-};
-
 /* Container Aliases */
 using elements_container = unordered_map<string, unsigned long>;
-//unsigned longs will be quicker to compare than strings longer than 4
-using relation = pair<unsigned long, unsigned long>;
-using relations_container = unordered_set<relation, pair_hush>;
+using relations_container = unordered_map<unsigned long, unordered_set<unsigned long>>;
 using poset = pair<elements_container, relations_container>;
 
 /* Global Variables */
@@ -42,59 +34,76 @@ namespace
 }
 
 /* Auxiliary Functions */
-static void poset_remove_relations(relations_container& relations,
-                                   const vector<relation>& relations_to_remove)
+static void remove_relations_with_element(relations_container& relations,
+                                          const unsigned long element)
 {
-    for(const auto& relation : relations_to_remove)
+    relations.erase(element);
+    for(auto& i : relations)
     {
-        relations.erase(relation);
+        i.second.erase(element);
     }
 }
 
-static vector<relation> poset_relations_with_element(
-        const relations_container& relations,
-        unsigned long element)
+static void merge(unordered_set<unsigned long>& s1,
+                  const unordered_set<unsigned long>& s2)
 {
-    vector<relation> relations_with_element;
-    for(const auto& relation : relations)
+    for(const auto& i : s2)
     {
-        if(element == relation.first ||
-           element == relation.second)
+        if(s1.count(i) == 0)
         {
-            relations_with_element.push_back(relation);
+            s1.insert(i);
         }
     }
-    return relations_with_element;
 }
 
-static bool poset_transitive_closure(relations_container& relations,
-                                     vector<relation>& added_relations)
+static bool transitive_closure_recursion(relations_container& new_relations,
+                                         unsigned long element,
+                                         unordered_map<unsigned long, bool>& done)
 {
-    vector<relation> missing_relations;
-    do
+    if(done[element])
     {
-        missing_relations.clear();
-        for(auto i = relations.cbegin(); i != relations.cend(); i++)
+        return true;
+    }
+    unordered_set<unsigned long> initial_relations = new_relations[element];
+    initial_relations.erase(element);
+    unordered_set<unsigned long> relations_to_add;
+    for(const auto& i : initial_relations)
+    {
+        if(!transitive_closure_recursion(new_relations, i, done))
         {
-            for (auto j = relations.cbegin(); j != relations.cend(); j++)
+            return false;
+        }
+        relations_to_add = new_relations[i];
+        for(const auto& j : relations_to_add)
+        {
+            if(new_relations[j].count(element) != 0)
             {
-                if (j->first == i->second &&
-                    relations.count(make_pair(i->first, j->second)) == 0)
-                {
-                    if(relations.count(make_pair(j->second, i->first)) != 0)
-                    {
-                        return false;
-                    }
-                    missing_relations.emplace_back(i->first, j->second);
-                }
+                return false;
             }
         }
-        for (const relation& relation : missing_relations)
+        merge(new_relations[element], relations_to_add);
+        relations_to_add.clear();
+    }
+    done[element] = true;
+    return true;
+}
+
+static bool transitive_closure(relations_container& relations)
+{
+    unordered_map<unsigned long, bool> done;
+    for(const auto& i : relations)
+    {
+        done[i.first] = false;
+    }
+    relations_container new_relations = relations;
+    for(const auto& i : relations)
+    {
+        if(!transitive_closure_recursion(new_relations, i.first, done))
         {
-            relations.insert(relation);
-            added_relations.push_back(relation);
+            return false;
         }
-    } while(!missing_relations.empty());
+    }
+    relations = new_relations;
     return true;
 }
 
@@ -181,8 +190,8 @@ namespace message
                      message << std::endl;
     }
 
-    static void about_poset_size(const string& function_name, unsigned long id,
-                                 size_t size)
+    static void poset_size(const string& function_name, unsigned long id,
+                           size_t size)
     {
         std::cerr << function_name + ": poset " +
                      std::to_string(id) +
@@ -191,13 +200,11 @@ namespace message
                      " element(s)" << std::endl;
     }
 
-    static void invalid_value(const string& function_name, const char* value,
+    static void invalid_value(const string& function_name,
                               const string& value_descriptor)
     {
         std::cerr << function_name + ": invalid value" +
-                     value_descriptor + " (" +
-                     print_value(value) +
-                     ")" << std::endl;
+                     value_descriptor + " (NULL)" << std::endl;
     }
 }
 
@@ -222,7 +229,8 @@ void poset_delete(unsigned long id)
     //-----------------------------
     message::function_start(__func__, id);
     //-----------------------------
-    if(posets.erase(id) == 0) {
+    if(posets.erase(id) == 0)//Erase returns 0 if nothing was erased.
+    {
         //-----------------------------
         message::about_poset(__func__, id, "does not exist");
         //-----------------------------
@@ -240,23 +248,18 @@ size_t poset_size(unsigned long id)
     //-----------------------------
     message::function_start(__func__, id);
     //-----------------------------
-    try
-    {
-        //If a poset with a given id doesn't exist in posets,
-        //at will throw an out_of_range exception.
-        size_t size = posets.at(id).first.size();
-        //-----------------------------
-        message::about_poset_size(__func__, id, size);
-        //-----------------------------
-        return size;
-    }
-    catch (std::out_of_range& e)
+    if(posets.count(id) == 0)
     {
         //-----------------------------
         message::about_poset(__func__, id, "does not exist");
         //-----------------------------
         return 0;
     }
+    size_t size = posets.at(id).first.size();
+    //-----------------------------
+    message::poset_size(__func__, id, size);
+    //-----------------------------
+    return size;
 }
 
 bool poset_insert(unsigned long id, char const* value)
@@ -266,38 +269,38 @@ bool poset_insert(unsigned long id, char const* value)
     //-----------------------------
     if(value == nullptr) {
         //-----------------------------
-        message::invalid_value(__func__, value, "");
+        message::invalid_value(__func__, "");
         //-----------------------------
         return false;
     }
-    try
-    {
-        poset& poset = posets.at(id);
-        elements_container& elements = poset.first;
-        string new_element(value);//Makes a deep copy.
-
-        if(elements.count(new_element) != 0)
-        {
-            //-----------------------------
-            message::about_element(__func__, id, value, "already exists");
-            //-----------------------------
-            return false;
-
-        }
-        //Relation of an element with itself is held implicitely.
-        elements[new_element] = next_element_id++;
-        //-----------------------------
-        message::about_element(__func__, id, value, "inserted");
-        //-----------------------------
-        return true;
-    }
-    catch (std::out_of_range& e)
+    if(posets.count(id) == 0)
     {
         //-----------------------------
         message::about_poset(__func__, id, "does not exist");
         //-----------------------------
         return false;
     }
+    poset& poset = posets.at(id);
+    elements_container& elements = poset.first;
+    relations_container& relations = poset.second;
+    string new_element(value);//Makes a deep copy.
+    unsigned long new_element_id;
+
+    if(elements.count(new_element) != 0)
+    {
+        //-----------------------------
+        message::about_element(__func__, id, value, "already exists");
+        //-----------------------------
+        return false;
+
+    }
+    new_element_id = next_element_id++;
+    elements[new_element] = new_element_id;
+    relations[new_element_id].insert(new_element_id);//Realtion with itself.
+    //-----------------------------
+    message::about_element(__func__, id, value, "inserted");
+    //-----------------------------
+    return true;
 }
 
 bool poset_remove(unsigned long id, char const* value)
@@ -307,7 +310,7 @@ bool poset_remove(unsigned long id, char const* value)
     //-----------------------------
     if(value == nullptr) {
         //-----------------------------
-        message::invalid_value(__func__, value, "");
+        message::invalid_value(__func__, "");
         //-----------------------------
         return false;
     }
@@ -330,9 +333,7 @@ bool poset_remove(unsigned long id, char const* value)
     }
     auto element_to_remove = elements.at(value);
     elements.erase(value);
-    vector<relation> relations_to_remove =
-            poset_relations_with_element(relations, element_to_remove);
-    poset_remove_relations(relations, relations_to_remove);
+    remove_relations_with_element(relations, element_to_remove);
     //-----------------------------
     message::about_element(__func__, id, value, "removed");
     //-----------------------------
@@ -347,13 +348,13 @@ bool poset_add(unsigned long id, char const* value1, char const* value2)
     bool invalid_data = false;
     if(value1 == nullptr) {
         //-----------------------------
-        message::invalid_value(__func__, value1, "1");
+        message::invalid_value(__func__, "1");
         //-----------------------------
         invalid_data = true;
     }
     if(value2 == nullptr) {
         //-----------------------------
-        message::invalid_value(__func__, value2, "2");
+        message::invalid_value(__func__, "2");
         //-----------------------------
         invalid_data = true;
     }
@@ -369,6 +370,7 @@ bool poset_add(unsigned long id, char const* value1, char const* value2)
     poset& poset = posets.at(id);
     elements_container& elements = poset.first;
     relations_container& relations = poset.second;
+
     if(elements.count(value1) == 0)
     {
         //-----------------------------
@@ -385,18 +387,9 @@ bool poset_add(unsigned long id, char const* value1, char const* value2)
         return false;
     }
     auto element2 = elements.at(value2);
-    vector<relation> added_relations;
 
-    if(element1 == element2 ||
-       relations.count(make_pair(element1, element2)) != 0)
-    {
-        //-----------------------------
-        message::about_relation(__func__, id, value1, value2,
-                                "already exists");
-        //-----------------------------
-        return false;
-    }
-    if(relations.count(make_pair(element2, element1)) != 0)
+    if(relations[element1].count(element2) != 0 ||
+       relations[element2].count(element1) != 0)
     {
         //-----------------------------
         message::about_relation(__func__, id, value1, value2,
@@ -404,11 +397,10 @@ bool poset_add(unsigned long id, char const* value1, char const* value2)
         //-----------------------------
         return false;
     }
-    relations.insert(make_pair(element1, element2));
-    added_relations.emplace_back(element1, element2);
-    if(!poset_transitive_closure(relations, added_relations))
+    relations[element1].insert(element2);
+    if(!transitive_closure(relations))
     {
-        poset_remove_relations(relations, added_relations);
+        relations[element1].erase(element2);
         //-----------------------------
         message::about_relation(__func__, id, value1, value2,
                                 "cannot be added");
