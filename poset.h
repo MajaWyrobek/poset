@@ -2,6 +2,15 @@
 #define CPP_POSET_H
 
 #ifdef __cplusplus
+    #include <iostream>
+    #include <cstddef>
+#else
+    #include <stdio.h>
+    #include <stddef.h>
+    #include <stdbool.h>
+#endif
+
+#ifdef __cplusplus
     extern "C"
     {
 #endif

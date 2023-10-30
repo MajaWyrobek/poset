@@ -1,17 +1,17 @@
+#include <unordered_map>
+#include <vector>
+#include <unordered_set>
+#include <algorithm>
+#include <string>
+#include "poset.h"
+
 #ifndef NDEBUG
     constexpr bool debug = true;
 #else
     constexpr bool debug = false;
 #endif
 
-#include <iostream>
-#include <unordered_map>
-#include <vector>
-#include <unordered_set>
-#include <algorithm>
-#include <string>
-#include <cassert>
-#include "poset.h"
+#define MESSAGE_FN(x) if constexpr(debug) {x}
 
 using std::unordered_map;
 using std::string;
@@ -32,108 +32,112 @@ namespace
     unsigned long next_element_id = 0;
 }
 
-/* Auxiliary Functions */
+/* Debug Messages */
 namespace message
 {
     static string print_value(const char* value)
     {
-        if(value == nullptr)
-        {
-            return "NULL";
-        }
-        else
-        {
-            return "\"" + string(value) + "\"";
-        }
+        MESSAGE_FN(if(value == nullptr)
+                   {
+                       return "NULL";
+                   }
+                   else
+                   {
+                       return "\"" + string(value) + "\"";
+                   })
     }
 
     static void function_start(const string& function_name)
     {
-        std::cerr << function_name + "()" << std::endl;
+        MESSAGE_FN(std::cerr << function_name + "()" << std::endl;)
     }
 
     static void function_start(const string& function_name, unsigned long id)
     {
-        std::cerr << function_name + "(" +
-                     std::to_string(id) +
-                     ")" << std::endl;
+        MESSAGE_FN(std::cerr << function_name + "(" +
+                                std::to_string(id) +
+                                ")" << std::endl;)
     }
 
     static void function_start(const string& function_name, unsigned long id,
                                const char* value)
     {
-        std::cerr << function_name + "(" +
-                     std::to_string(id) +
-                     ", " +
-                     print_value(value) +
-                     ")" << std::endl;
+        MESSAGE_FN(std::cerr << function_name + "(" +
+                                std::to_string(id) +
+                                ", " +
+                                print_value(value) +
+                                ")" << std::endl;)
     }
 
     static void function_start(const string& function_name, unsigned long id,
                                const char* value1, const char* value2)
     {
-        std::cerr << function_name + "(" +
-                     std::to_string(id) +
-                     ", " +
-                     print_value(value1) +
-                     ", " +
-                     print_value(value2) +
-                     ")" << std::endl;
+        MESSAGE_FN(std::cerr << function_name + "(" +
+                                std::to_string(id) +
+                                ", " +
+                                print_value(value1) +
+                                ", " +
+                                print_value(value2) +
+                                ")" << std::endl;)
     }
 
     static void about_poset(const string& function_name, unsigned long id,
                             const string& message)
     {
-        std::cerr << function_name + ": poset " +
-                     std::to_string(id) +
-                     " " +
-                     message << std::endl;
+        MESSAGE_FN(std::cerr << function_name + ": poset " +
+                                std::to_string(id) +
+                                " " +
+                                message << std::endl;)
     }
 
     static void about_element(const string& function_name, unsigned long id,
                               const char* value,
                               const string& message)
     {
-        std::cerr << function_name + ": poset " +
-                     std::to_string(id) +
-                     ", element " +
-                     print_value(value) +
-                     " " +
-                     message << std::endl;
+        MESSAGE_FN(std::cerr << function_name + ": poset " +
+                                std::to_string(id) +
+                                ", element " +
+                                print_value(value) +
+                                " " +
+                                message << std::endl;)
     }
 
     static void about_relation(const string& function_name, unsigned long id,
                                const char* value1, const char* value2,
                                const string& message)
     {
-        std::cerr << function_name + ": poset " +
-                     std::to_string(id) +
-                     ", relation (" +
-                     print_value(value1) +
-                     ", " +
-                     print_value(value2) +
-                     ") " +
-                     message << std::endl;
+        MESSAGE_FN(std::cerr << function_name + ": poset " +
+                                std::to_string(id) +
+                                ", relation (" +
+                                print_value(value1) +
+                                ", " +
+                                print_value(value2) +
+                                ") " +
+                                message << std::endl;)
     }
 
     static void poset_size(const string& function_name, unsigned long id,
                            size_t size)
     {
-        std::cerr << function_name + ": poset " +
-                     std::to_string(id) +
-                     " contains " +
-                     std::to_string(size) +
-                     " element(s)" << std::endl;
+        MESSAGE_FN(std::cerr << function_name + ": poset " +
+                                std::to_string(id) +
+                                " contains " +
+                                std::to_string(size) +
+                                " element(s)" << std::endl;)
     }
 
-    static void invalid_value(const string& function_name,
+    static void invalid_value(const string& function_name, const char* value,
                               const string& value_descriptor)
     {
-        std::cerr << function_name + ": invalid value" +
-                     value_descriptor + " (NULL)" << std::endl;
+        MESSAGE_FN(std::cerr << function_name + ": invalid value" +
+                                value_descriptor +
+                                " (" +
+                                print_value(value) +
+                                ")" << std::endl;)
     }
 }
 
+/* Auxiliary Functions */
 static void remove_relations_with_element(relations_container& relations,
                                           const unsigned long element)
 {
@@ -214,14 +218,14 @@ static bool valid_values(char const* value1, char const* value2,
     if (value1 == nullptr)
     {
         //-----------------------------
-        message::invalid_value(function_name, "1");
+        message::invalid_value(function_name, value1, "1");
         //-----------------------------
         invalid_data = true;
     }
     if (value2 == nullptr)
     {
         //-----------------------------
-        message::invalid_value(function_name, "2");
+        message::invalid_value(function_name, value2, "2");
         //-----------------------------
         invalid_data = true;
     }
@@ -291,7 +295,7 @@ bool poset_insert(unsigned long id, char const* value)
     //-----------------------------
     if(value == nullptr) {
         //-----------------------------
-        message::invalid_value(__func__, "");
+        message::invalid_value(__func__, value, "");
         //-----------------------------
         return false;
     }
@@ -332,7 +336,8 @@ bool poset_remove(unsigned long id, char const* value)
     //-----------------------------
     if(value == nullptr) {
         //-----------------------------
-        message::invalid_value(__func__, "");
+        if constexpr(debug)
+            message::invalid_value(__func__, value, "");
         //-----------------------------
         return false;
     }
@@ -555,71 +560,4 @@ void poset_clear(unsigned long id)
         message::about_poset(__func__, id, "cleared");
         //-----------------------------
     }
-}
-
-int main() {
-    unsigned long p1;
-
-    p1 = poset_new();
-    assert(poset_size(p1) == 0);
-    assert(poset_size(p1 + 1) == 0);
-    assert(!poset_insert(p1, NULL));
-    assert(poset_insert(p1, "A"));
-    assert(poset_test(p1, "A", "A"));
-    assert(!poset_insert(p1, "A"));
-    assert(!poset_insert(p1 + 1, "B"));
-    assert(poset_size(p1) == 1);
-    assert(!poset_remove(p1 + 1, "A"));
-    assert(poset_remove(p1, "A"));
-    assert(!poset_remove(p1, "A"));
-    assert(poset_insert(p1, "B"));
-    assert(poset_insert(p1, "C"));
-    assert(poset_add(p1, "B", "C"));
-    assert(!poset_remove(p1, "A"));
-    assert(!poset_add(p1, NULL, "X"));
-    assert(!poset_del(p1, NULL, "X"));
-    assert(!poset_test(p1, NULL, "X"));
-    assert(!poset_add(p1, "X", NULL));
-    assert(!poset_del(p1, "X", NULL));
-    assert(!poset_test(p1, "X", NULL));
-    assert(!poset_add(p1, NULL, NULL));
-    assert(!poset_del(p1, NULL, NULL));
-    assert(!poset_test(p1, NULL, NULL));
-    assert(!poset_add(p1, "C", "D"));
-    assert(!poset_add(p1, "D", "C"));
-    assert(!poset_add(p1, "D", "D"));
-    assert(!poset_add(p1, "E", "D"));
-    assert(!poset_del(p1, "C", "D"));
-    assert(!poset_del(p1, "D", "C"));
-    assert(!poset_del(p1, "D", "D"));
-    assert(!poset_del(p1, "E", "D"));
-    assert(!poset_test(p1, "C", "D"));
-    assert(!poset_test(p1, "D", "C"));
-    assert(!poset_test(p1, "D", "D"));
-    assert(!poset_test(p1, "E", "D"));
-    assert(!poset_add(p1 + 1, "C", "D"));
-    assert(!poset_del(p1 + 1, "C", "D"));
-    assert(!poset_test(p1 + 1, "C", "D"));
-    poset_clear(p1);
-    poset_clear(p1 + 1);
-    assert(poset_insert(p1, "E"));
-    assert(poset_insert(p1, "F"));
-    assert(poset_insert(p1, "G"));
-    assert(poset_add(p1, "E", "F"));
-    assert(!poset_add(p1, "E", "F"));
-    assert(!poset_add(p1, "F", "E"));
-    assert(poset_test(p1, "E", "F"));
-    assert(!poset_test(p1, "F", "E"));
-    assert(poset_add(p1, "F", "G"));
-    assert(poset_test(p1, "E", "G"));
-    assert(!poset_del(p1, "E", "G"));
-    assert(poset_del(p1, "E", "F"));
-    assert(!poset_del(p1, "E", "F"));
-    assert(!poset_del(p1, "G", "F"));
-    assert(!poset_del(p1, "G", "G"));
-    assert(poset_size(p1) == 3);
-    poset_delete(p1);
-    poset_delete(p1);
-    poset_delete(p1 + 1);
-    return 0;
 }
