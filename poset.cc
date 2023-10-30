@@ -11,6 +11,8 @@
 #include <algorithm>
 #include <string>
 #include <cassert>
+#include <stddef.h>
+#include <cstddef>
 #include "poset.h"
 
 using std::unordered_map;
