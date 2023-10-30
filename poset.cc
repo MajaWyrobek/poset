@@ -39,16 +39,6 @@ namespace
         return *posets;
     }
 
-    // static unsigned long& next_poset_id() {
-    //     static unsigned long *next_poset_id = 0;
-    //     return *next_poset_id;
-    // }
-
-    // static unsigned long& next_element_id() {
-    //     static unsigned long *next_element_id = 0;
-    //     return *next_element_id;
-    // }
-
 /* Auxiliary Functions */
 namespace message
 {
