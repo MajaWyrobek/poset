@@ -29,22 +29,25 @@ using poset = pair<elements_container, relations_container>;
 /* Global Variables */
 namespace
 {
-    unordered_map<unsigned long, poset>& posets() {
+    unsigned long next_poset_id = 0;
+    unsigned long next_element_id = 0;
+}
+
+    static unordered_map<unsigned long, poset>& posets() {
         static unordered_map<unsigned long, poset>* posets = 
             new unordered_map<unsigned long, poset>();
         return *posets;
     }
 
-    unsigned long& next_poset_id() {
-        static unsigned long *next_poset_id = 0;
-        return *next_poset_id;
-    }
+    // static unsigned long& next_poset_id() {
+    //     static unsigned long *next_poset_id = 0;
+    //     return *next_poset_id;
+    // }
 
-    unsigned long& next_element_id() {
-        static unsigned long *next_element_id = 0;
-        return *next_element_id;
-    }
-}
+    // static unsigned long& next_element_id() {
+    //     static unsigned long *next_element_id = 0;
+    //     return *next_element_id;
+    // }
 
 /* Auxiliary Functions */
 namespace message
@@ -254,8 +257,8 @@ namespace cxx {
         message::function_start(__func__);
         //-----------------------------
         poset poset;
-        unsigned long poset_id = next_poset_id();
-        next_poset_id()++;
+        unsigned long poset_id = next_poset_id;
+        next_poset_id++;
         posets()[poset_id] = poset;
         //-----------------------------
         message::about_poset(__func__, poset_id, "created");
@@ -333,7 +336,7 @@ namespace cxx {
             return false;
 
         }
-        new_element_id = next_element_id()++;
+        new_element_id = next_element_id++;
         elements[new_element] = new_element_id;
         relations[new_element_id].insert(new_element_id);//Realtion with itself.
         //-----------------------------
